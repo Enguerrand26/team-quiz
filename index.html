@@ -325,6 +325,10 @@ const QUESTIONS = [
   {q:"What does 'ROI' stand for in business?", o:["Rate of Interest","Return on Investment","Risk of Inflation","Revenue over Income"], a:1},
   {q:"Who wrote the play 'Romeo and Juliet'?", o:["Charles Dickens","Jane Austen","William Shakespeare","Mark Twain"], a:2}
 ];
+/* TEST MODE: true = ANYONE can open the console and run a game (needs firebase-regles-TEST.json).
+   false = only the signed-in game master (needs firebase-regles-securite.json). */
+const OPEN_HOST_TEST = true;
+
 const SECONDS = 20;
 const TEAM_NAMES = ["Red Falcons","Blue Sharks","Green Wolves","Gold Lions","Purple Owls","Orange Tigers"];
 const TEAM_COLORS = {"Red Falcons":"#ff4d63","Blue Sharks":"#4aa8ff","Green Wolves":"#22d37a","Gold Lions":"#ffc83d","Purple Owls":"#c77dff","Orange Tigers":"#ff9f43"};
@@ -377,9 +381,9 @@ if (!configured){
   setBadge("Connecting…", false);
   onAuthStateChanged(auth, u => {
     user = u;
-    if (!u){ signInAnonymously(auth).catch(() => setBadge("Auth error", false)); return; }
-    uid = u.uid; isGM = !u.isAnonymous;
-    setBadge(isGM ? "Game master" : "Live · connected", true);
+    if (!u){ signInAnonymously(auth).catch(e => setBadge("Auth error: " + ((e && e.code) || "unknown"), false)); return; }
+    uid = u.uid; isGM = OPEN_HOST_TEST || !u.isAnonymous;
+    setBadge(!u.isAnonymous ? "Game master" : (OPEN_HOST_TEST ? "Live · test mode" : "Live · connected"), true);
     $("gmToggle").textContent = isGM ? (view === "gm" ? "Player view" : "Console") : "Game master";
     if (!subscribed) subscribe();
     me = players[uid] && players[uid].pseudo ? players[uid] : null;
@@ -392,7 +396,7 @@ function subscribe(){
   subscribed = true;
   onValue(ref(db, ".info/serverTimeOffset"), s => { offset = s.val() || 0; });
   onValue(ref(db, ".info/connected"), s => {
-    if (s.val() === true && uid && !isGM){
+    if (s.val() === true && uid && user && user.isAnonymous){
       const r = ref(db, "players/" + uid + "/online");
       onDisconnect(r).set(false);
       if (me) update(ref(db, "players/" + uid), {online:true});
