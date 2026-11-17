@@ -184,7 +184,6 @@
   <div class="logo"><span>Team Quiz</span><b>Champions</b></div>
   <div class="hdr-r">
     <span id="mode" class="badge">Connecting…</span>
-    <button id="gmToggle" class="hostbtn" type="button">Game master</button>
   </div>
 </header>
 
@@ -192,11 +191,11 @@
   <section>
     <!-- JOIN -->
     <div id="join" class="panel screen">
-      <div id="setupWarn" class="setup hidden"><b>Firebase is not configured yet.</b><br>Open <code>index.html</code>, fill in <code>firebaseConfig</code> at the top of the script (see README), then reload.</div>
+      <div id="setupWarn" class="setup hidden"><b>Firebase is not configured yet.</b><br>Open <code>index.html</code> and fill in <code>firebaseConfig</code> at the top of the script.</div>
       <h2>Join the show</h2>
       <label for="pseudo">Your nickname</label>
       <input id="pseudo" type="text" maxlength="16" placeholder="e.g. QuizMaster42" autocomplete="off">
-      <p class="muted" style="font-size:14px">The game master will place you in a team just before the game starts.</p>
+      <p class="muted" style="font-size:14px">Teams are formed automatically when the game starts.</p>
       <div class="err" id="joinErr"></div>
       <button id="startBtn" class="btn">Enter the studio</button>
     </div>
@@ -209,7 +208,7 @@
       <div id="lobbyTeam"></div>
       <div id="lobbyMates" class="mates"></div>
       <p id="lobbyTxt" style="font-size:18px;margin:18px 0 0"></p>
-      <div style="margin-top:20px"><button id="tStart" class="btn hidden" type="button">Start the game now</button></div>
+      <div style="margin-top:20px"><button id="tStart" class="btn" type="button">Start the game now</button></div>
       <div class="dots"><i></i><i></i><i></i></div>
     </div>
 
@@ -236,53 +235,8 @@
       <div class="bigled" id="resScore"></div>
       <div class="muted" id="resDetail"></div>
       <p id="resTeam" style="font:600 20px Oswald;letter-spacing:1.5px;text-transform:uppercase;margin:18px 0 22px"></p>
-      <div style="margin-bottom:14px"><button id="tNew" class="btn hidden" type="button">Play again (new game)</button></div>
+      <div style="margin-bottom:14px"><button id="tNew" class="btn" type="button">Play again (new game)</button></div>
       <button id="againBtn" class="btn ghost" type="button">Change nickname</button>
-    </div>
-
-    <!-- GM LOGIN -->
-    <div id="login" class="panel screen hidden">
-      <h2>Game master login</h2>
-      <label for="gmEmail">E-mail</label>
-      <input id="gmEmail" type="text" autocomplete="username" placeholder="you@example.com">
-      <label for="gmPass">Password</label>
-      <input id="gmPass" type="password" autocomplete="current-password" style="width:100%;padding:13px 15px;border-radius:10px;border:1px solid var(--line);background:rgba(3,6,30,.8);color:var(--text);font:500 16px Inter">
-      <div class="err" id="loginErr"></div>
-      <div class="row">
-        <button id="loginBtn" class="btn" type="button">Sign in</button>
-        <button id="loginCancel" class="btn ghost" type="button">Cancel</button>
-      </div>
-    </div>
-
-    <!-- GM CONSOLE -->
-    <div id="gm" class="panel screen hidden">
-      <h2>Game master console</h2>
-      <div class="hstat">
-        <span id="hStatus" class="pill"></span>
-        <span id="hPlayers" class="pill"></span>
-        <span id="hTimer" class="led">--</span>
-      </div>
-      <div class="hostgrid">
-        <button class="btn sm" id="hNew" type="button">New game</button>
-        <button class="btn sm" id="hNext" type="button">Next question ▶</button>
-        <button class="btn sm" id="hReveal" type="button">Reveal answer</button>
-        <button class="btn sm" id="hFinal" type="button">Show final</button>
-        <button class="btn sm red" id="hEnd" type="button">Close game</button>
-      </div>
-      <h3 style="margin-top:18px">Teams</h3>
-      <div class="row">
-        <label for="teamCount" style="margin:0">Number of teams</label>
-        <input id="teamCount" type="number" min="2" max="6" value="3">
-        <button class="btn sm" id="hShuffle" type="button">Shuffle players into teams</button>
-        <button class="btn ghost" id="hPlace" type="button">Place unassigned players</button>
-      </div>
-      <div class="hmsg" id="hMsg"></div>
-      <div id="hBoard" style="margin-top:8px"></div>
-      <h3 style="margin-top:22px">Players</h3>
-      <div id="hTable"></div>
-      <div class="row" style="margin-top:20px">
-        <button class="btn ghost" id="gmOut" type="button">Sign out</button>
-      </div>
     </div>
   </section>
 
@@ -296,13 +250,10 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, onValue, update, remove, serverTimestamp, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* =====================================================================
-   1) FIREBASE CONFIG — paste yours here (Firebase console > Project settings > Your apps)
-   These values are public by design; security comes from database.rules.json.
-   ===================================================================== */
+/* ===== 1) FIREBASE CONFIG ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyDWO_jWztXj1EWWc7ApPlv_0pWyuGqFgf8",
   authDomain: "team-quiz-d4e88.firebaseapp.com",
@@ -313,9 +264,7 @@ const firebaseConfig = {
   appId: "1:192266201849:web:fec7bb8c630334af4a1028"
 };
 
-/* =====================================================================
-   2) QUESTIONS — edit freely
-   ===================================================================== */
+/* ===== 2) QUESTIONS — edit freely ===== */
 const QUESTIONS = [
   {q:"What is the capital city of Australia?", o:["Sydney","Canberra","Melbourne","Perth"], a:1},
   {q:"Which planet is known as the Red Planet?", o:["Venus","Jupiter","Mars","Mercury"], a:2},
@@ -328,10 +277,6 @@ const QUESTIONS = [
   {q:"What does 'ROI' stand for in business?", o:["Rate of Interest","Return on Investment","Risk of Inflation","Revenue over Income"], a:1},
   {q:"Who wrote the play 'Romeo and Juliet'?", o:["Charles Dickens","Jane Austen","William Shakespeare","Mark Twain"], a:2}
 ];
-/* TEST MODE: true = ANYONE can open the console and run a game (needs firebase-regles-TEST.json).
-   false = only the signed-in game master (needs firebase-regles-securite.json). */
-const OPEN_HOST_TEST = true;
-
 const SECONDS = 20;
 const TEAM_NAMES = ["Red Falcons","Blue Sharks","Green Wolves","Gold Lions","Purple Owls","Orange Tigers"];
 const TEAM_COLORS = {"Red Falcons":"#ff4d63","Blue Sharks":"#4aa8ff","Green Wolves":"#22d37a","Gold Lions":"#ffc83d","Purple Owls":"#c77dff","Orange Tigers":"#ff9f43"};
@@ -340,21 +285,20 @@ const RING = 2*Math.PI*29;
 /* ---------- STATE ---------- */
 const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("YOUR_");
 let app, auth, db;
-let user = null, uid = null, isGM = false;
+let uid = null;
 let players = {}, G = {phase:"idle", gameId:"", q:-1};
 let me = null;
 let gotGame = false, gotPlayers = false, subscribed = false;
 let offset = 0;
-let view = "player";            // "player" | "gm" | "login"
-let tick = null, lastKey = "", scoredKey = "";
-let hostTimer = null, earlyT = null, hostTick = null, gmKey = "";
+let tick = null, lastKey = "", scoredKey = "", earlyT = null;
 
 const $ = id => document.getElementById(id);
-const SCREENS = ["join","lobby","quiz","result","login","gm"];
+const SCREENS = ["join","lobby","quiz","result"];
 const show = id => SCREENS.forEach(x => $(x).classList.toggle("hidden", x !== id));
 const now = () => Date.now() + offset;
 const teamColor = n => TEAM_COLORS[n] || "#8fa0ff";
 const setBadge = (t, live) => { $("mode").textContent = t; $("mode").classList.toggle("live", !!live); };
+const shuffle = a => { a = a.slice(); for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
 
 /* ---------- DERIVED DATA ---------- */
 function inGame(){
@@ -383,14 +327,11 @@ if (!configured){
   db = getDatabase(app);
   setBadge("Connecting…", false);
   onAuthStateChanged(auth, u => {
-    user = u;
     if (!u){ signInAnonymously(auth).catch(e => setBadge("Auth error: " + ((e && e.code) || "unknown"), false)); return; }
-    uid = u.uid; isGM = OPEN_HOST_TEST || !u.isAnonymous;
-    setBadge(!u.isAnonymous ? "Game master" : (OPEN_HOST_TEST ? "Live · test mode" : "Live · connected"), true);
-    $("gmToggle").textContent = isGM ? (view === "gm" ? "Player view" : "Console") : "Game master";
+    uid = u.uid;
+    setBadge("Live · connected", true);
     if (!subscribed) subscribe();
     me = players[uid] && players[uid].pseudo ? players[uid] : null;
-    if (isGM && view === "login") view = "gm";
     route(true);
   });
 }
@@ -399,9 +340,8 @@ function subscribe(){
   subscribed = true;
   onValue(ref(db, ".info/serverTimeOffset"), s => { offset = s.val() || 0; });
   onValue(ref(db, ".info/connected"), s => {
-    if (s.val() === true && uid && user && user.isAnonymous){
-      const r = ref(db, "players/" + uid + "/online");
-      onDisconnect(r).set(false);
+    if (s.val() === true && uid){
+      onDisconnect(ref(db, "players/" + uid + "/online")).set(false);
       if (me) update(ref(db, "players/" + uid), {online:true});
     }
   });
@@ -415,19 +355,15 @@ function subscribe(){
     me = players[uid] && players[uid].pseudo ? players[uid] : null;
     gotPlayers = true;
     renderBoards();
-    if (view === "gm" && isGM){ renderGM(); maybeEarlyReveal(); }
-    else if (had !== !!me) route(true);
+    if (had !== !!me) route(true);
     else if (lastKey.startsWith("lobby")) showLobby();
-    if (OPEN_HOST_TEST && !(view === "gm" && isGM)) maybeEarlyReveal();
+    maybeEarlyReveal();
   });
 }
 
 /* ---------- ROUTER ---------- */
 function route(force){
   if (!configured || !uid || !gotGame || !gotPlayers) return;
-  if (view === "login" && !isGM){ show("login"); return; }
-  if (view === "gm" && isGM){ show("gm"); renderGM(); return; }
-  view = "player";
   if (!me){ if (lastKey !== "join" || force){ lastKey = "join"; clearInterval(tick); show("join"); } return; }
   const key = (G.phase === "question" || G.phase === "reveal" || G.phase === "final")
     ? [G.gameId, G.phase, G.q].join("|") : "lobby|" + G.gameId;
@@ -444,8 +380,6 @@ $("startBtn").onclick = async () => {
   const pseudo = $("pseudo").value.trim();
   const err = $("joinErr"); err.textContent = "";
   if (pseudo.length < 2){ err.textContent = "Please enter a nickname (at least 2 characters)."; return; }
-  const taken = !OPEN_HOST_TEST && Object.entries(players).some(([id,p]) => id !== uid && p && p.pseudo && p.pseudo.toLowerCase() === pseudo.toLowerCase());
-  if (taken){ err.textContent = "This nickname is already taken. Try another one."; return; }
   try{
     await update(ref(db, "players/" + uid), {pseudo, gameId:G.gameId || "", score:0, correct:0, answered:0, scoredQ:-1, lastPts:0, ans:null, online:true});
   }catch(e){ err.textContent = "Could not join (database rules?). Check the setup."; }
@@ -458,8 +392,7 @@ $("againBtn").onclick = async () => {
 /* ---------- LOBBY ---------- */
 function showLobby(){
   if (!me) return;
-  show("lobby");
-  $("tStart").classList.toggle("hidden", !OPEN_HOST_TEST); lastKey = "lobby|" + G.gameId;
+  show("lobby"); lastKey = "lobby|" + G.gameId;
   $("lobbyWho").textContent = me.pseudo;
   const tt = $("lobbyTeam"); tt.innerHTML = "";
   const mates = $("lobbyMates"); mates.innerHTML = "";
@@ -473,8 +406,7 @@ function showLobby(){
     });
   }
   const n = inGame().filter(p => p.online).length;
-  $("lobbyTxt").textContent = (me.team ? "You're in " + me.team + ". " : "The game master will assign your team soon. ")
-    + "Waiting for the game master… (" + n + (n === 1 ? " player" : " players") + " online)";
+  $("lobbyTxt").textContent = "Anyone can start the game. " + n + (n === 1 ? " player" : " players") + " online.";
 }
 
 /* ---------- QUESTION UI ---------- */
@@ -522,6 +454,11 @@ function paintReveal(item, chosen){
   });
 }
 
+async function setGame(patch){
+  try{ await update(ref(db, "game"), patch); return true; }
+  catch(e){ setBadge("Write refused — check the database rules", false); return false; }
+}
+
 function liveQuestion(){
   const item = QUESTIONS[G.q]; if (!item){ showLobby(); return; }
   buildQuestion(item, G.q, livePick);
@@ -534,10 +471,8 @@ function liveQuestion(){
   startTimer(() => {
     setOptsDisabled(true);
     if (!(me.ans && me.ans.q === G.q)) setFb("Time's up!", "var(--bad)");
-    if (OPEN_HOST_TEST){
-      const g = G.gameId, qq = G.q;
-      setTimeout(() => { if (G.gameId === g && G.phase === "question" && G.q === qq) gmGame({phase:"reveal"}); }, 1500 + Math.random()*1500);
-    }
+    const g = G.gameId, qq = G.q;   // any player's browser can reveal the answer
+    setTimeout(() => { if (G.gameId === g && G.phase === "question" && G.q === qq) setGame({phase:"reveal"}); }, 1500 + Math.random()*1500);
   });
 }
 function livePick(i){
@@ -557,7 +492,8 @@ function liveReveal(){
   $("timeLeft").textContent = "0"; $("timer").classList.remove("low");
   const a = (me.ans && me.ans.q === G.q) ? me.ans : null;
   paintReveal(item, a ? a.choice : -1);
-  if (OPEN_HOST_TEST){ $("tNext").textContent = (G.q + 1 >= QUESTIONS.length) ? "Show final results ▶" : "Next question ▶"; $("tNext").classList.remove("hidden"); }
+  $("tNext").textContent = (G.q + 1 >= QUESTIONS.length) ? "Show final results ▶" : "Next question ▶";
+  $("tNext").classList.remove("hidden");
   const right = !!(a && a.choice === item.a);
   let pts = me.scoredQ === G.q ? (me.lastPts || 0) : 0;
   const k = G.gameId + "|" + G.q;
@@ -575,7 +511,6 @@ function liveReveal(){
 /* ---------- RESULT ---------- */
 function showResult(){
   show("result");
-  $("tNew").classList.toggle("hidden", !OPEN_HOST_TEST);
   $("resWho").textContent = me.pseudo + (me.team ? " · " + me.team : "");
   $("resScore").textContent = (me.score || 0) + " PTS";
   $("resDetail").textContent = (me.correct || 0) + " / " + QUESTIONS.length + " correct answers";
@@ -612,61 +547,18 @@ function renderBoards(){
   });
 }
 
-/* ---------- GAME MASTER: login ---------- */
-$("gmToggle").onclick = () => {
-  if (!configured) return;
-  if (isGM){ view = view === "gm" ? "player" : "gm"; }
-  else view = view === "login" ? "player" : "login";
-  $("gmToggle").textContent = isGM ? (view === "gm" ? "Player view" : "Console") : "Game master";
-  if (view === "gm"){ clearInterval(hostTick); hostTick = setInterval(updateHostTimer, 400); } else clearInterval(hostTick);
-  lastKey = ""; route(true);
-};
-$("loginCancel").onclick = () => { view = "player"; lastKey = ""; route(true); };
-$("loginBtn").onclick = async () => {
-  $("loginErr").textContent = "";
-  try{
-    await signInWithEmailAndPassword(auth, $("gmEmail").value.trim(), $("gmPass").value);
-    view = "gm"; $("gmPass").value = "";
-    clearInterval(hostTick); hostTick = setInterval(updateHostTimer, 400);
-  }catch(e){ $("loginErr").textContent = "Sign-in failed. Check e-mail and password."; }
-};
-$("gmOut").onclick = async () => {
-  view = "player"; clearInterval(hostTick); me = null; lastKey = "";
-  await signOut(auth);   // onAuthStateChanged signs a fresh anonymous player in
-  $("gmToggle").textContent = "Game master";
-};
-
-/* ---------- GAME MASTER: actions ---------- */
-const hostMsg = t => { $("hMsg").textContent = t || ""; };
-async function gmGame(patch){
-  try{ await update(ref(db, "game"), patch); hostMsg(""); return true; }
-  catch(e){ hostMsg("Write refused — is your UID set in the database rules?"); return false; }
+/* ---------- GAME CONTROLS (any player) ---------- */
+function maybeEarlyReveal(){
+  if (G.phase !== "question" || earlyT) return;
+  const act = inGame().filter(p => p.online);
+  if (act.length && act.every(p => p.ans && p.ans.q === G.q)){
+    earlyT = setTimeout(() => { earlyT = null; if (G.phase === "question") setGame({phase:"reveal"}); }, 900);
+  }
 }
-function clearHostTimers(){ clearTimeout(hostTimer); clearTimeout(earlyT); hostTimer = null; earlyT = null; }
-const shuffle = a => { a = a.slice(); for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
-
-$("hNew").onclick = async () => {
-  clearHostTimers();
-  const gid = String(Date.now());
-  const upd = {"game/gameId":gid, "game/phase":"lobby", "game/q":-1, "game/startedAt":null};
-  Object.keys(players).forEach(id => {
-    const b = "players/" + id + "/";
-    Object.assign(upd, {[b+"gameId"]:gid, [b+"score"]:0, [b+"correct"]:0, [b+"answered"]:0, [b+"scoredQ"]:-1, [b+"lastPts"]:0, [b+"ans"]:null});
-  });
-  try{ await update(ref(db), upd); hostMsg(""); }catch(e){ hostMsg("Write refused — is your UID set in the database rules?"); }
-};
-$("hShuffle").onclick = async () => {
-  const n = Math.min(6, Math.max(2, parseInt($("teamCount").value, 10) || 2));
-  const act = shuffle(inGame().filter(p => p.online));
-  if (!act.length){ hostMsg("No online players to place."); return; }
-  const upd = {};
-  act.forEach((p,i) => { upd["players/" + p.id + "/team"] = TEAM_NAMES[i % n]; });
-  try{ await update(ref(db), upd); hostMsg("Teams shuffled."); }catch(e){ hostMsg("Write refused."); }
-};
 async function placeUnassigned(){
   const act = inGame().filter(p => p.online);
   const free = act.filter(p => !p.team);
-  if (!free.length) return true;
+  if (!free.length) return;
   const counts = {}; act.forEach(p => { if (p.team) counts[p.team] = (counts[p.team]||0) + 1; });
   let names = Object.keys(counts);
   if (!names.length) names = TEAM_NAMES.slice(0,2);
@@ -676,99 +568,9 @@ async function placeUnassigned(){
     names.sort((a,b) => counts[a] - counts[b]);
     upd["players/" + p.id + "/team"] = names[0]; counts[names[0]]++;
   });
-  try{ await update(ref(db), upd); return true; }catch(e){ hostMsg("Write refused."); return false; }
+  try{ await update(ref(db), upd); }catch(e){}
 }
-$("hPlace").onclick = async () => { if (await placeUnassigned()) hostMsg("Unassigned players placed."); };
-$("hNext").onclick = async () => {
-  if (G.phase === "idle" || !G.gameId){ hostMsg("Start a new game first."); return; }
-  const q = (G.q === undefined ? -1 : G.q) + 1;
-  clearHostTimers();
-  if (q >= QUESTIONS.length){ await gmGame({phase:"final"}); return; }
-  await placeUnassigned();
-  const gid = G.gameId;
-  if (await gmGame({phase:"question", q, startedAt:serverTimestamp()})){
-    hostTimer = setTimeout(() => { if (G.gameId === gid && G.phase === "question" && G.q === q) gmGame({phase:"reveal"}); }, (SECONDS+2)*1000);
-  }
-};
-$("hReveal").onclick = async () => { clearHostTimers(); if (G.phase === "question") await gmGame({phase:"reveal"}); };
-$("hFinal").onclick = async () => { clearHostTimers(); if (G.gameId) await gmGame({phase:"final"}); };
-$("hEnd").onclick = async () => { clearHostTimers(); await gmGame({phase:"idle", q:-1}); };
-
-function maybeEarlyReveal(){
-  if (G.phase !== "question" || earlyT) return;
-  const act = inGame().filter(p => p.online);
-  if (act.length && act.every(p => p.ans && p.ans.q === G.q)){
-    earlyT = setTimeout(() => { earlyT = null; if (G.phase === "question") gmGame({phase:"reveal"}); }, 900);
-  }
-}
-function updateHostTimer(){
-  $("hTimer").textContent = G.phase === "question" ? Math.ceil(leftSeconds()) + "s" : "--";
-}
-function renderGM(){
-  const act = inGame();
-  const online = act.filter(p => p.online).length;
-  const live = G.phase !== "idle" && !!G.gameId;
-  $("hStatus").textContent = !live ? "No game running"
-    : G.phase === "lobby" ? "Lobby — waiting to start"
-    : G.phase === "question" ? "Question " + (G.q+1) + " / " + QUESTIONS.length + " — in progress"
-    : G.phase === "reveal" ? "Question " + (G.q+1) + " — answer revealed" : "Final results";
-  $("hPlayers").textContent = online + " online / " + act.length + " total";
-  $("hNext").disabled = !live || G.phase === "question" || G.phase === "final";
-  $("hNext").textContent = live && G.q + 1 >= QUESTIONS.length ? "Finish ▶" : "Next question ▶";
-  $("hReveal").disabled = !(live && G.phase === "question");
-  $("hFinal").disabled = !live || G.phase === "final";
-  $("hEnd").disabled = !live;
-  updateHostTimer();
-
-  /* live question board */
-  const b = $("hBoard"); b.innerHTML = "";
-  if (live && (G.phase === "question" || G.phase === "reveal") && QUESTIONS[G.q]){
-    const item = QUESTIONS[G.q];
-    const q = document.createElement("div"); q.className = "hexb qban";
-    const qin = document.createElement("div"); qin.className = "in"; qin.textContent = item.q; q.appendChild(qin); b.appendChild(q);
-    const ans = act.filter(p => p.ans && p.ans.q === G.q);
-    const info = document.createElement("div"); info.className = "muted"; info.style.margin = "0 0 12px";
-    info.textContent = ans.length + " / " + online + " answers received"; b.appendChild(info);
-    const grid = document.createElement("div"); grid.className = "opts"; b.appendChild(grid);
-    item.o.forEach((t,i) => {
-      const n = ans.filter(p => p.ans.choice === i).length;
-      const o = document.createElement("div"); o.className = "hexb opt";
-      if (G.phase === "reveal") o.classList.add(i === item.a ? "ok" : "dim");
-      const inn = document.createElement("span"); inn.className = "in";
-      const k = document.createElement("b"); k.textContent = "ABCD"[i];
-      const tx = document.createElement("span"); tx.textContent = t;
-      inn.append(k, tx);
-      if (G.phase === "reveal"){ const c = document.createElement("span"); c.className = "cnt"; c.textContent = n; inn.appendChild(c); }
-      o.appendChild(inn); grid.appendChild(o);
-    });
-  }
-
-  /* players table (rebuilt only when something changed, so selects stay usable) */
-  const key = JSON.stringify(act.map(p => [p.id, p.pseudo, p.team || "", !!p.online, p.score || 0]));
-  if (key === gmKey) return; gmKey = key;
-  const box = $("hTable"); box.innerHTML = "";
-  if (!act.length){ const e = document.createElement("div"); e.className = "empty"; e.textContent = "No players yet."; box.appendChild(e); return; }
-  const tb = document.createElement("table"); tb.className = "gmtable";
-  const hr = tb.insertRow(); ["Player","Team","Score",""].forEach(h => { const th = document.createElement("th"); th.textContent = h; hr.appendChild(th); });
-  act.sort((a,b) => (a.team||"~").localeCompare(b.team||"~") || a.pseudo.localeCompare(b.pseudo)).forEach(p => {
-    const r = tb.insertRow();
-    const c1 = r.insertCell(); const d = document.createElement("span"); d.className = "on" + (p.online ? " y" : "");
-    c1.append(d, document.createTextNode(p.pseudo));
-    const c2 = r.insertCell(); const sel = document.createElement("select");
-    [["", "— none —"], ...TEAM_NAMES.map(n => [n, n])].forEach(([v,t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; if ((p.team || "") === v) o.selected = true; sel.appendChild(o); });
-    sel.onchange = () => update(ref(db, "players/" + p.id), {team: sel.value || null}).catch(() => hostMsg("Write refused."));
-    c2.appendChild(sel);
-    r.insertCell().textContent = p.score || 0;
-    const c4 = r.insertCell(); const x = document.createElement("button"); x.className = "x"; x.type = "button"; x.textContent = "✕"; x.title = "Remove player";
-    x.onclick = () => remove(ref(db, "players/" + p.id)).catch(() => hostMsg("Write refused."));
-    c4.appendChild(x);
-  });
-  box.appendChild(tb);
-}
-
-/* ---------- TEST MODE: quick controls for any player ---------- */
 async function quickStart(){
-  clearHostTimers();
   const gid = String(Date.now());
   const upd = {"game/gameId":gid, "game/phase":"question", "game/q":0, "game/startedAt":serverTimestamp()};
   const online = shuffle(Object.entries(players).filter(([id,p]) => p && p.pseudo && p.online).map(([id]) => id));
@@ -778,14 +580,14 @@ async function quickStart(){
     Object.assign(upd, {[b+"gameId"]:gid, [b+"score"]:0, [b+"correct"]:0, [b+"answered"]:0, [b+"scoredQ"]:-1, [b+"lastPts"]:0, [b+"ans"]:null, [b+"team"]:null});
   });
   online.forEach((id,i) => { upd["players/" + id + "/team"] = TEAM_NAMES[i % n]; });
-  try{ await update(ref(db), upd); }catch(e){ setBadge("Write refused — check the TEST rules", false); }
+  try{ await update(ref(db), upd); }catch(e){ setBadge("Write refused — check the database rules", false); }
 }
 async function quickNext(){
   if (G.phase !== "reveal") return;
   const q = G.q + 1;
-  if (q >= QUESTIONS.length){ await gmGame({phase:"final"}); return; }
+  if (q >= QUESTIONS.length){ await setGame({phase:"final"}); return; }
   await placeUnassigned();
-  await gmGame({phase:"question", q, startedAt:serverTimestamp()});
+  await setGame({phase:"question", q, startedAt:serverTimestamp()});
 }
 $("tStart").onclick = quickStart;
 $("tNew").onclick = quickStart;
