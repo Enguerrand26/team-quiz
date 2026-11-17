@@ -277,6 +277,10 @@ const QUESTIONS = [
   {q:"What does 'ROI' stand for in business?", o:["Rate of Interest","Return on Investment","Risk of Inflation","Revenue over Income"], a:1},
   {q:"Who wrote the play 'Romeo and Juliet'?", o:["Charles Dickens","Jane Austen","William Shakespeare","Mark Twain"], a:2}
 ];
+/* QUICK TEST: true = the first answer shows the result immediately (right or wrong), for everyone.
+   false = normal game: the result appears when time is up or when everyone has answered. */
+const QUICK_TEST = true;
+
 const SECONDS = 20;
 const TEAM_NAMES = ["Red Falcons","Blue Sharks","Green Wolves","Gold Lions","Purple Owls","Orange Tigers"];
 const TEAM_COLORS = {"Red Falcons":"#ff4d63","Blue Sharks":"#4aa8ff","Green Wolves":"#22d37a","Gold Lions":"#ffc83d","Purple Owls":"#c77dff","Orange Tigers":"#ff9f43"};
@@ -483,7 +487,7 @@ function livePick(i){
   me.ans = ans; setOptsDisabled(true);
   const b = $("opts").children[i]; if (b) b.classList.add("sel");
   setFb("Answer locked in!", "var(--gold)");
-  update(ref(db, "players/" + uid), {ans});
+  update(ref(db, "players/" + uid), {ans}).then(() => { if (QUICK_TEST) setGame({phase:"reveal"}); });
 }
 function liveReveal(){
   const item = QUESTIONS[G.q]; if (!item){ showLobby(); return; }
