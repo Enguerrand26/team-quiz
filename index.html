@@ -209,6 +209,7 @@
       <div id="lobbyTeam"></div>
       <div id="lobbyMates" class="mates"></div>
       <p id="lobbyTxt" style="font-size:18px;margin:18px 0 0"></p>
+      <div style="margin-top:20px"><button id="tStart" class="btn hidden" type="button">Start the game now</button></div>
       <div class="dots"><i></i><i></i><i></i></div>
     </div>
 
@@ -225,6 +226,7 @@
       <div class="hexb qban"><div class="in"><span id="qText"></span></div></div>
       <div class="opts" id="opts"></div>
       <div class="fb" id="fb"></div>
+      <div style="text-align:center;margin-top:14px"><button id="tNext" class="btn hidden" type="button">Next question ▶</button></div>
     </div>
 
     <!-- RESULT -->
@@ -234,6 +236,7 @@
       <div class="bigled" id="resScore"></div>
       <div class="muted" id="resDetail"></div>
       <p id="resTeam" style="font:600 20px Oswald;letter-spacing:1.5px;text-transform:uppercase;margin:18px 0 22px"></p>
+      <div style="margin-bottom:14px"><button id="tNew" class="btn hidden" type="button">Play again (new game)</button></div>
       <button id="againBtn" class="btn ghost" type="button">Change nickname</button>
     </div>
 
@@ -415,6 +418,7 @@ function subscribe(){
     if (view === "gm" && isGM){ renderGM(); maybeEarlyReveal(); }
     else if (had !== !!me) route(true);
     else if (lastKey.startsWith("lobby")) showLobby();
+    if (OPEN_HOST_TEST && !(view === "gm" && isGM)) maybeEarlyReveal();
   });
 }
 
@@ -440,7 +444,7 @@ $("startBtn").onclick = async () => {
   const pseudo = $("pseudo").value.trim();
   const err = $("joinErr"); err.textContent = "";
   if (pseudo.length < 2){ err.textContent = "Please enter a nickname (at least 2 characters)."; return; }
-  const taken = Object.entries(players).some(([id,p]) => id !== uid && p && p.pseudo && p.pseudo.toLowerCase() === pseudo.toLowerCase());
+  const taken = !OPEN_HOST_TEST && Object.entries(players).some(([id,p]) => id !== uid && p && p.pseudo && p.pseudo.toLowerCase() === pseudo.toLowerCase());
   if (taken){ err.textContent = "This nickname is already taken. Try another one."; return; }
   try{
     await update(ref(db, "players/" + uid), {pseudo, gameId:G.gameId || "", score:0, correct:0, answered:0, scoredQ:-1, lastPts:0, ans:null, online:true});
@@ -454,7 +458,8 @@ $("againBtn").onclick = async () => {
 /* ---------- LOBBY ---------- */
 function showLobby(){
   if (!me) return;
-  show("lobby"); lastKey = "lobby|" + G.gameId;
+  show("lobby");
+  $("tStart").classList.toggle("hidden", !OPEN_HOST_TEST); lastKey = "lobby|" + G.gameId;
   $("lobbyWho").textContent = me.pseudo;
   const tt = $("lobbyTeam"); tt.innerHTML = "";
   const mates = $("lobbyMates"); mates.innerHTML = "";
@@ -475,6 +480,7 @@ function showLobby(){
 /* ---------- QUESTION UI ---------- */
 function buildQuestion(item, idx, onPick){
   show("quiz");
+  $("tNext").classList.add("hidden");
   $("qcount").innerHTML = "Question <b>" + (idx+1) + "</b> / " + QUESTIONS.length;
   $("qText").textContent = item.q;
   $("myScore").textContent = me.score || 0;
@@ -528,6 +534,10 @@ function liveQuestion(){
   startTimer(() => {
     setOptsDisabled(true);
     if (!(me.ans && me.ans.q === G.q)) setFb("Time's up!", "var(--bad)");
+    if (OPEN_HOST_TEST){
+      const g = G.gameId, qq = G.q;
+      setTimeout(() => { if (G.gameId === g && G.phase === "question" && G.q === qq) gmGame({phase:"reveal"}); }, 1500 + Math.random()*1500);
+    }
   });
 }
 function livePick(i){
@@ -547,6 +557,7 @@ function liveReveal(){
   $("timeLeft").textContent = "0"; $("timer").classList.remove("low");
   const a = (me.ans && me.ans.q === G.q) ? me.ans : null;
   paintReveal(item, a ? a.choice : -1);
+  if (OPEN_HOST_TEST){ $("tNext").textContent = (G.q + 1 >= QUESTIONS.length) ? "Show final results ▶" : "Next question ▶"; $("tNext").classList.remove("hidden"); }
   const right = !!(a && a.choice === item.a);
   let pts = me.scoredQ === G.q ? (me.lastPts || 0) : 0;
   const k = G.gameId + "|" + G.q;
@@ -564,6 +575,7 @@ function liveReveal(){
 /* ---------- RESULT ---------- */
 function showResult(){
   show("result");
+  $("tNew").classList.toggle("hidden", !OPEN_HOST_TEST);
   $("resWho").textContent = me.pseudo + (me.team ? " · " + me.team : "");
   $("resScore").textContent = (me.score || 0) + " PTS";
   $("resDetail").textContent = (me.correct || 0) + " / " + QUESTIONS.length + " correct answers";
@@ -753,6 +765,31 @@ function renderGM(){
   });
   box.appendChild(tb);
 }
+
+/* ---------- TEST MODE: quick controls for any player ---------- */
+async function quickStart(){
+  clearHostTimers();
+  const gid = String(Date.now());
+  const upd = {"game/gameId":gid, "game/phase":"question", "game/q":0, "game/startedAt":serverTimestamp()};
+  const online = shuffle(Object.entries(players).filter(([id,p]) => p && p.pseudo && p.online).map(([id]) => id));
+  const n = online.length >= 6 ? 3 : 2;
+  Object.keys(players).forEach(id => {
+    const b = "players/" + id + "/";
+    Object.assign(upd, {[b+"gameId"]:gid, [b+"score"]:0, [b+"correct"]:0, [b+"answered"]:0, [b+"scoredQ"]:-1, [b+"lastPts"]:0, [b+"ans"]:null, [b+"team"]:null});
+  });
+  online.forEach((id,i) => { upd["players/" + id + "/team"] = TEAM_NAMES[i % n]; });
+  try{ await update(ref(db), upd); }catch(e){ setBadge("Write refused — check the TEST rules", false); }
+}
+async function quickNext(){
+  if (G.phase !== "reveal") return;
+  const q = G.q + 1;
+  if (q >= QUESTIONS.length){ await gmGame({phase:"final"}); return; }
+  await placeUnassigned();
+  await gmGame({phase:"question", q, startedAt:serverTimestamp()});
+}
+$("tStart").onclick = quickStart;
+$("tNew").onclick = quickStart;
+$("tNext").onclick = quickNext;
 
 renderBoards();
 </script>
